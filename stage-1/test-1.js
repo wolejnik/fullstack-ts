@@ -5,7 +5,9 @@ const PORT = 3000;
 // Middleware to parse JSON bodies
 app.use(express.json());
 
-// Mock data
+// Mock async database delay simulation helper
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 let tasks = [
     { id: 1, title: "Learn Node.js", completed: false },
     { id: 2, title: "Build an API", completed: false }
@@ -16,39 +18,75 @@ let tasks = [
 // ==========================================
 
 // GET all tasks
-app.get('/tasks', (req, res) => {
-    res.json(tasks);
+app.get('/tasks', async (req, res, next) => {
+    try {
+        await delay(50);
+        res.json(tasks);
+    } catch (error) {
+        next(error); // passes async errors to your global handler
+    }
 });
 
 // GET task by ID (Moved up here so it actually runs!)
-app.get('/tasks/:id', (req, res, next) => {
-    const task = tasks.find(t => t.id === parseInt(req.params.id));
+app.get('/tasks/:id', async (req, res, next) => {
+    try {
+        await delay(50); 
+        const task = tasks.find(t => t.id === parseInt(req.params.id));
 
-    if (!task) {
-        const error = new Error('Zadanie o podanym ID nie istnieje.');
-        error.status = 404;
-        return next(error); // Passes the error to the global handler
+        if (!task) {
+            const error = new Error('Zadanie o podanym ID nie istnieje.');
+            error.status = 404;
+            return next(error); 
+        }
+
+        res.json(task);
+    } catch (error) {
+        next(error);
     }
-
-    res.json(task);
 });
 
 // POST a new task
-app.post('/tasks', (req, res) => {
-    const newTask = {
-        id: tasks.length + 1,
-        title: req.body.title,
-        completed: false
-    };
-    tasks.push(newTask);
-    res.status(201).json(newTask);
+app.post('/tasks', async (req, res, next) => {
+    try {
+        await delay(50);
+        
+        
+        if (!req.body.title) {
+            const error = new Error('Title of task is required.');
+            error.status = 400;
+            return next(error);
+        }
+
+        const newTask = {
+            id: tasks.length + 1,
+            title: req.body.title,
+            completed: false
+        };
+        tasks.push(newTask);
+        res.status(201).json(newTask);
+    } catch (error) {
+        next(error);
+    }
 });
 
 // DELETE a task
-app.delete('/tasks/:id', (req, res) => {
-    const { id } = req.params;
-    tasks = tasks.filter(t => t.id !== parseInt(id));
-    res.status(204).send();
+app.delete('/tasks/:id', async (req, res, next) => {
+    try {
+        await delay(50); // Simulating database latency
+        const { id } = req.params;
+        
+        const taskExists = tasks.some(t => t.id === parseInt(id));
+        if (!taskExists) {
+            const error = new Error('The task by id is not existing.');
+            error.status = 404;
+            return next(error);
+        }
+
+        tasks = tasks.filter(t => t.id !== parseInt(id));
+        res.status(204).send(); 
+    } catch (error) {
+        next(error);
+    }
 });
 
 // ==========================================
@@ -57,7 +95,7 @@ app.delete('/tasks/:id', (req, res) => {
 
 // 404 Catch-all for routes that don't exist
 app.use((req, res, next) => {
-    const error = new Error('Nie znaleziono takiej strony!');
+    const error = new Error('This page is not existing!');
     error.status = 404;
     next(error);
 });
