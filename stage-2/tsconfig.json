@@ -5,7 +5,11 @@
     "moduleResolution": "NodeNext",
     "lib": ["ES2022"],                           // Add "DOM" here if you are building for the browser
     "outDir": "./dist",                          // Where compiled JS goes
-    "rootDir": "./src",                          // Where your source code lives
+    "rootDir": "./src",
+    
+    /* Add for tests */
+    "isolatedModules": true,       // Fixes the ts-jest hybrid module warning
+    "types": ["jest", "node"],// Where your source code lives
 
     /* Strict Type-Checking */
     "strict": true,                              // Enables a broad suite of type-checking behaviors
