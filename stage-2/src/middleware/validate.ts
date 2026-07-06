@@ -1,17 +1,19 @@
+// validate.ts (Modified to handle empty objects for defaults)
 import { Request, Response, NextFunction } from 'express';
 import { AnyZodObject, ZodError } from 'zod';
 
 export const validate = (schema: AnyZodObject) => {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const payloadToValidate: Record<string, any> = {};
-      if (req.body && Object.keys(req.body).length > 0) payloadToValidate.body = req.body;
-      if (req.query && Object.keys(req.query).length > 0) payloadToValidate.query = req.query;
-      if (req.params && Object.keys(req.params).length > 0) payloadToValidate.params = req.params;
+      // ✅ Always validate body, query, and params so Zod can apply .default() values!
+      const payloadToValidate = {
+        body: req.body || {},
+        query: req.query || {},
+        params: req.params || {},
+      };
 
       const parsed = await schema.parseAsync(payloadToValidate);
       
-      // 3. Express 5 Safe Assignment: Safely inject parsed data back into the request context
       if (parsed.body) {
         req.body = parsed.body;
       }
@@ -29,8 +31,6 @@ export const validate = (schema: AnyZodObject) => {
       return next();
     } catch (error) {
       if (error instanceof ZodError) {
-        console.log("=== RAW ZOD ERROR ===", JSON.stringify(error.format(), null, 2));
-        
         return res.status(400).json({
           status: 'fail',
           errors: error.errors.map(err => ({

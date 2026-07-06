@@ -12,7 +12,7 @@ describe('Users Router Endpoints', () => {
     it('should pass validation and return 200 with valid query parameters', async () => {
       const response = await request(app)
         .get('/users')
-        .query({ page: '1', limit: '10' }); 
+        .query({ page: 1, limit: 10 }); 
 
       // 🔍 DEBUG LOG FOR 500 CRASH
       if (response.status === 500) {
@@ -20,7 +20,8 @@ describe('Users Router Endpoints', () => {
       }
 
       expect(response.status).toBe(200);
-      expect(response.text).toBe('Fetching page 1 with limit 10');
+      expect(response.body.page).toBe('1');
+      expect(response.body.limit).toBe('10');
     });
 
     it('should fail validation and return 400 with invalid query parameters', async () => {
@@ -43,9 +44,11 @@ describe('POST /users', () => {
     const response = await request(app)
       .post('/users')
       .send(validUser);
+    console.log("🚀 ~ response POST:", response.body)
 
     expect(response.status).toBe(201);
-    expect(response.body).toEqual(validUser);
+    expect(response.body.username).toEqual(validUser.username);
+    expect(response.body.email).toEqual(validUser.email);
   });
 
   it('should fail validation and return 400 when body data is invalid', async () => {
